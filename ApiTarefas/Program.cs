@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,30 @@ app.MapPost("/tarefas", async (Tarefa tarefa, AppDbContext db) =>
         await db.SaveChangesAsync();
         return Results.Created($"/tarefas/{tarefa.Id}", tarefa);
     });
+
+app.MapPut("/tarefas/{id}", async (int id, Tarefa inputTarefa, AppDbContext db) =>
+{
+    var tarefa = await db.Tarefas.FindAsync(id);
+
+    if(tarefa is null) return Results.NotFound();
+
+    tarefa.Nome = inputTarefa.Nome;
+    tarefa.IsConcluida = inputTarefa.IsConcluida;
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+app.MapDelete("/tarefas/{id}", async (int id, AppDbContext db) =>
+{
+    if (await db.Tarefas.FindAsync(id) is Tarefa tarefa)
+    {
+        db.Tarefas.Remove(tarefa);
+        await db.SaveChangesAsync();
+        return Results.Ok(tarefa);
+    }
+    return Results.NotFound();
+});
 
 app.Run();
 
